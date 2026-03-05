@@ -3,29 +3,60 @@
 A full-stack workout tracker with a FastAPI backend and mobile-first React frontend.
 
 ---
-
-## Project Structure
+## Frontend File Structure
 
 ```
-liftlog/
-├── backend/          ← FastAPI + SQLite
-│   ├── app/
-│   │   ├── main.py           ← App entry point
-│   │   ├── database.py       ← SQLAlchemy models + DB setup
-│   │   ├── auth.py           ← JWT authentication
-│   │   ├── schemas/
-│   │   │   └── schemas.py    ← Pydantic request/response models
-│   │   └── routes/
-│   │       ├── auth.py       ← POST /auth/register, /auth/login, GET /auth/me
-│   │       ├── exercises.py  ← CRUD /exercises
-│   │       ├── templates.py  ← CRUD /templates + exercise management
-│   │       ├── workouts.py   ← Start, log sets, complete workouts
-│   │       └── progress.py   ← GET /progress/exercise/{id}
-│   ├── requirements.txt
-│   └── start.sh
-│
-└── frontend/
-    └── index.html    ← Complete single-file React mobile app
+frontend/
+├── index.html                    ← Shell: loads CSS + JS in order
+└── src/
+    ├── styles/
+    │   ├── base.css              ← CSS variables, reset, layout, nav bar
+    │   ├── components.css        ← Buttons, cards, inputs, modals, tabs, badges
+    │   └── screens.css           ← Auth, workout logger, history, profile styles
+    │
+    ├── api/
+    │   └── client.js             ← apiFetch wrapper + all API calls (api.exercises.*, etc.)
+    │
+    ├── context/
+    │   └── AppContext.js         ← AppCtx, useApp(), formatDate(), formatDuration()
+    │
+    ├── components/
+    │   ├── LineChart.js          ← SVG weight progression chart
+    │   ├── TabBar.js             ← Bottom navigation bar (5 tabs)
+    │   └── Modal.js              ← Reusable bottom-sheet modal
+    │
+    ├── screens/
+    │   ├── AuthScreen.js         ← Login / Register
+    │   ├── HomeScreen.js         ← Dashboard, start workout, quick actions
+    │   ├── ExercisesScreen.js    ← Exercise CRUD (add, edit, delete)
+    │   ├── TemplatesScreen.js    ← Template builder (add/remove exercises)
+    │   ├── WorkoutScreen.js      ← Live logging (sets, weight×reps, previous data)
+    │   ├── ProgressScreen.js     ← Per-exercise chart + table
+    │   ├── HistoryScreen.js      ← Past sessions list + detail view
+    │   └── ProfileScreen.js      ← User stats + Sign Out
+    │
+    └── App.js                    ← Root: auth gate, screen router, context provider
+```
+---
+
+## Backend File Structure
+
+```
+backend/
+├── requirements.txt
+├── start.sh
+└── app/
+    ├── main.py                   ← FastAPI app, CORS, router registration
+    ├── database.py               ← SQLAlchemy models + SQLite setup
+    ├── auth.py                   ← JWT tokens, bcrypt, get_current_user
+    ├── schemas/
+    │   └── schemas.py            ← Pydantic request/response models
+    └── routes/
+        ├── auth.py               ← POST /auth/register, /auth/login, GET /auth/me
+        ├── exercises.py          ← CRUD /exercises
+        ├── templates.py          ← CRUD /templates + exercise management
+        ├── workouts.py           ← Start, log, complete, history, previous sets
+        └── progress.py           ← GET /progress/exercise/{id}
 ```
 
 ---
@@ -63,7 +94,7 @@ python3 -m http.server 3000
 ```
 
 > **Note**: The frontend defaults to `http://localhost:8000` as the API base.
-> To change this, edit `API_BASE` at the top of the `<script>` in `index.html`.
+> To change this, edit `API_BASE` in `src/api/client.js`.
 
 ---
 

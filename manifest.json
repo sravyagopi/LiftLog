@@ -1,0 +1,8 @@
+{
+  "name": "LiftLog",
+  "short_name": "LiftLog",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#111111"
+}

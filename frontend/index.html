@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>LiftLog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="LiftLog">
+  <link rel="apple-touch-icon" href="/icon.jpg">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="src/styles/base.css"/>
+  <link rel="stylesheet" href="src/styles/components.css"/>
+  <link rel="stylesheet" href="src/styles/screens.css"/>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- React CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+
+<!-- App modules (load order matters) -->
+<script src="src/api/client.js"></script>
+<script src="src/context/AppContext.js"></script>
+<script src="src/components/LineChart.js"></script>
+<script src="src/components/TabBar.js"></script>
+<script src="src/components/Modal.js"></script>
+<script src="src/screens/AuthScreen.js"></script>
+<script src="src/screens/HomeScreen.js"></script>
+<script src="src/screens/ExercisesScreen.js"></script>
+<script src="src/screens/TemplatesScreen.js"></script>
+<script src="src/screens/WorkoutScreen.js"></script>
+<script src="src/screens/ProgressScreen.js"></script>
+<script src="src/screens/HistoryScreen.js"></script>
+<script src="src/screens/ProfileScreen.js"></script>
+<script src="src/App.js"></script>
+</body>
+</html>
