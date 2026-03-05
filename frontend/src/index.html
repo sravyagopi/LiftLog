@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>LiftLog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --bg2: #141414;
+    --bg3: #1e1e1e;
+    --card: #1a1a1a;
+    --border: #2a2a2a;
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --text: #f0f0f0;
+    --muted: #666;
+    --danger: #ff4757;
+    --success: #2ed573;
+    --radius: 14px;
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    max-width: 430px;
+    margin: 0 auto;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+  #root { min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* ── Layout ── */
+  .screen { flex: 1; display: flex; flex-direction: column; animation: fadeIn .2s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .safe-top { padding-top: max(44px, env(safe-area-inset-top)); }
+  .safe-bottom { padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+  .scroll-content { flex: 1; overflow-y: auto; padding: 0 16px 100px; }
+  .scroll-content::-webkit-scrollbar { display: none; }
+
+  /* ── Nav Bar ── */
+  .nav-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    background: var(--bg); position: sticky; top: 0; z-index: 10;
+  }
+  .nav-title { font-family: var(--font-display); font-size: 28px; letter-spacing: 2px; color: var(--accent); }
+  .nav-sub { font-family: var(--font-display); font-size: 22px; letter-spacing: 1px; color: var(--text); }
+  .nav-btn { background: none; border: none; color: var(--text); font-family: var(--font-body); font-size: 15px; cursor: pointer; padding: 6px; display: flex; align-items: center; gap: 4px; }
+  .nav-btn.accent { color: var(--accent); font-weight: 600; }
+  .nav-btn.danger { color: var(--danger); }
+
+  /* ── Bottom Tab Bar ── */
+  .tab-bar {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 430px;
+    background: rgba(10,10,10,.95); backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display: flex; padding: max(8px, env(safe-area-inset-bottom)) 0 8px;
+    z-index: 100;
+  }
+  .tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; padding: 4px 0; }
+  .tab-icon { font-size: 22px; line-height: 1; }
+  .tab-label { font-size: 10px; font-weight: 500; color: var(--muted); transition: color .15s; }
+  .tab-item.active .tab-label { color: var(--accent); }
+  .tab-item.active .tab-icon { filter: drop-shadow(0 0 6px var(--accent)); }
+
+  /* ── Buttons ── */
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    border: none; border-radius: var(--radius); cursor: pointer;
+    font-family: var(--font-body); font-weight: 600; transition: all .15s; width: 100%;
+  }
+  .btn-primary { background: var(--accent); color: #000; padding: 16px; font-size: 16px; }
+  .btn-primary:active { transform: scale(.97); background: #d4e840; }
+  .btn-secondary { background: var(--bg3); color: var(--text); padding: 14px; font-size: 15px; border: 1px solid var(--border); }
+  .btn-secondary:active { background: var(--border); }
+  .btn-danger { background: transparent; color: var(--danger); padding: 14px; font-size: 15px; border: 1px solid var(--danger); }
+  .btn-ghost { background: none; color: var(--accent); padding: 10px; font-size: 14px; width: auto; font-weight: 500; }
+  .btn-sm { padding: 8px 14px; font-size: 13px; width: auto; border-radius: 8px; }
+  .btn-icon { width: 36px; height: 36px; border-radius: 50%; padding: 0; font-size: 18px; flex-shrink: 0; }
+
+  /* ── Cards ── */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .card-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; }
+  .card-row + .card-row { border-top: 1px solid var(--border); }
+  .card-title { font-weight: 600; font-size: 16px; }
+  .card-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .section-header { font-family: var(--font-display); font-size: 13px; letter-spacing: 2px; color: var(--muted); padding: 20px 0 8px; text-transform: uppercase; }
+
+  /* ── Inputs ── */
+  .input-group { margin-bottom: 16px; }
+  .input-label { font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: .5px; text-transform: uppercase; }
+  .input {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); font-family: var(--font-body);
+    font-size: 16px; padding: 14px; outline: none; transition: border-color .15s;
+  }
+  .input:focus { border-color: var(--accent); }
+  .input-row { display: flex; gap: 8px; }
+  .input-row .input-group { flex: 1; }
+
+  /* ── Set Row ── */
+  .set-row { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--border); }
+  .set-num { font-family: var(--font-mono); font-size: 13px; color: var(--muted); width: 24px; flex-shrink: 0; }
+  .set-input { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--font-mono); font-size: 16px; padding: 8px 10px; outline: none; text-align: center; width: 0; }
+  .set-input:focus { border-color: var(--accent); }
+  .set-x { color: var(--muted); font-size: 14px; flex-shrink: 0; }
+
+  /* ── Previous sets badge ── */
+  .prev-sets { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 16px 10px; }
+  .prev-badge { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .prev-label { font-size: 11px; color: var(--muted); padding: 8px 16px 0; letter-spacing: .5px; text-transform: uppercase; }
+
+  /* ── Exercise block in workout ── */
+  .exercise-block { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; }
+  .exercise-block-header { padding: 14px 16px 10px; display: flex; align-items: center; justify-content: space-between; }
+  .exercise-block-name { font-weight: 600; font-size: 17px; }
+
+  /* ── Progress chart ── */
+  .chart-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; }
+  .chart-title { font-weight: 600; font-size: 15px; margin-bottom: 12px; }
+  .chart-svg { width: 100%; height: 120px; }
+
+  /* ── Auth screen ── */
+  .auth-bg { background: var(--bg); flex: 1; display: flex; flex-direction: column; padding: 48px 24px 32px; }
+  .auth-logo { font-family: var(--font-display); font-size: 64px; letter-spacing: 4px; color: var(--accent); line-height: 1; margin-bottom: 4px; }
+  .auth-tagline { color: var(--muted); font-size: 15px; margin-bottom: 48px; }
+  .auth-form { flex: 1; display: flex; flex-direction: column; gap: 0; }
+  .auth-tabs { display: flex; background: var(--bg3); border-radius: 10px; padding: 4px; margin-bottom: 28px; }
+  .auth-tab { flex: 1; padding: 10px; text-align: center; font-weight: 600; font-size: 14px; border-radius: 8px; cursor: pointer; transition: all .15s; color: var(--muted); }
+  .auth-tab.active { background: var(--accent); color: #000; }
+  .error-msg { background: rgba(255,71,87,.15); border: 1px solid var(--danger); border-radius: 8px; color: var(--danger); padding: 12px; font-size: 13px; margin-bottom: 16px; }
+  .success-msg { background: rgba(46,213,115,.15); border: 1px solid var(--success); border-radius: 8px; color: var(--success); padding: 12px; font-size: 13px; margin-bottom: 16px; }
+
+  /* ── Workout complete screen ── */
+  .complete-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; text-align: center; }
+  .complete-icon { font-size: 72px; margin-bottom: 16px; }
+  .complete-title { font-family: var(--font-display); font-size: 48px; letter-spacing: 2px; color: var(--accent); }
+  .complete-stats { display: flex; gap: 24px; margin: 24px 0; }
+  .complete-stat { text-align: center; }
+  .complete-stat-val { font-family: var(--font-display); font-size: 40px; color: var(--text); }
+  .complete-stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  /* ── Tag/chip ── */
+  .chip { display: inline-flex; align-items: center; background: var(--bg3); border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px; font-size: 12px; color: var(--muted); }
+
+  /* ── Empty state ── */
+  .empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 24px; color: var(--muted); text-align: center; gap: 12px; }
+  .empty-icon { font-size: 48px; }
+  .empty-text { font-size: 15px; line-height: 1.5; }
+
+  /* ── Loading ── */
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-screen { flex: 1; display: flex; align-items: center; justify-content: center; }
+
+  /* ── Modal overlay ── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 200; display: flex; align-items: flex-end; animation: fadeIn .15s; }
+  .modal-sheet { background: var(--bg2); border-radius: 20px 20px 0 0; padding: 24px 20px 32px; width: 100%; max-height: 85vh; overflow-y: auto; animation: slideUp .2s ease; }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: none; } }
+  .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
+  .modal-title { font-family: var(--font-display); font-size: 26px; letter-spacing: 1px; margin-bottom: 20px; }
+
+  /* ── History item ── */
+  .history-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; }
+  .history-item + .history-item { border-top: 1px solid var(--border); }
+  .history-date { font-size: 12px; color: var(--accent); font-weight: 600; font-family: var(--font-mono); }
+  .history-name { font-weight: 600; font-size: 15px; }
+  .history-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .history-arrow { color: var(--muted); font-size: 18px; }
+
+  .badge { background: var(--accent); color: #000; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px; font-family: var(--font-mono); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script>
+const { useState, useEffect, useCallback, useRef, createContext, useContext } = React;
+
+// ── API Layer ──────────────────────────────────────────────────────────────
+const API_BASE = "http://localhost:8000";
+
+function getToken() { return localStorage.getItem("liftlog_token"); }
+function setToken(t) { localStorage.setItem("liftlog_token", t); }
+function clearToken() { localStorage.removeItem("liftlog_token"); }
+
+async function apiFetch(path, opts = {}) {
+  const token = getToken();
+  const headers = { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...opts.headers };
+  const res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
+  if (res.status === 204) return null;
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Request failed");
+  return data;
+}
+
+const api = {
+  register: (u, p) => apiFetch("/auth/register", { method: "POST", body: JSON.stringify({ username: u, password: p }) }),
+  login: (u, p) => apiFetch("/auth/login", { method: "POST", body: JSON.stringify({ username: u, password: p }) }),
+  me: () => apiFetch("/auth/me"),
+  exercises: { list: () => apiFetch("/exercises"), create: (d) => apiFetch("/exercises", { method: "POST", body: JSON.stringify(d) }), update: (id, d) => apiFetch(`/exercises/${id}`, { method: "PUT", body: JSON.stringify(d) }), delete: (id) => apiFetch(`/exercises/${id}`, { method: "DELETE" }) },
+  templates: { list: () => apiFetch("/templates"), create: (d) => apiFetch("/templates", { method: "POST", body: JSON.stringify(d) }), update: (id, d) => apiFetch(`/templates/${id}`, { method: "PUT", body: JSON.stringify(d) }), delete: (id) => apiFetch(`/templates/${id}`, { method: "DELETE" }), addExercise: (id, d) => apiFetch(`/templates/${id}/exercises`, { method: "POST", body: JSON.stringify(d) }), removeExercise: (id, exId) => apiFetch(`/templates/${id}/exercises/${exId}`, { method: "DELETE" }) },
+  workouts: { start: (tid) => apiFetch("/workouts/start", { method: "POST", body: JSON.stringify({ template_id: tid }) }), active: () => apiFetch("/workouts/active"), addSet: (sid, d) => apiFetch(`/workouts/${sid}/sets`, { method: "POST", body: JSON.stringify(d) }), updateSet: (sid, setId, d) => apiFetch(`/workouts/${sid}/sets/${setId}`, { method: "PUT", body: JSON.stringify(d) }), deleteSet: (sid, setId) => apiFetch(`/workouts/${sid}/sets/${setId}`, { method: "DELETE" }), complete: (sid) => apiFetch(`/workouts/${sid}/complete`, { method: "POST" }), history: () => apiFetch("/workouts/history"), get: (id) => apiFetch(`/workouts/${id}`), previousSets: (exId) => apiFetch(`/workouts/previous/${exId}`) },
+  progress: { exercise: (id) => apiFetch(`/progress/exercise/${id}`) }
+};
+
+// ── App Context ────────────────────────────────────────────────────────────
+const AppCtx = createContext(null);
+function useApp() { return useContext(AppCtx); }
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+function formatDuration(start, end) {
+  if (!end) return "—";
+  const m = Math.round((new Date(end) - new Date(start)) / 60000);
+  if (m < 60) return `${m}m`;
+  return `${Math.floor(m/60)}h ${m%60}m`;
+}
+
+// ── Mini SVG Line Chart ────────────────────────────────────────────────────
+function LineChart({ data, color = "#e8ff47" }) {
+  if (!data || data.length < 2) return React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: "20px", fontSize: 13 } }, "Not enough data yet");
+  const vals = data.map(d => d.max_weight);
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const range = max - min || 1;
+  const W = 300, H = 100;
+  const pts = vals.map((v, i) => {
+    const x = (i / (vals.length - 1)) * (W - 20) + 10;
+    const y = H - 10 - ((v - min) / range) * (H - 20);
+    return `${x},${y}`;
+  }).join(" ");
+  const area = `M ${pts.replace(",", " L ").split(" ").slice(0)} L ${(vals.length-1)/(vals.length-1)*(W-20)+10} ${H} L 10 ${H} Z`;
+  const polyline = `M ${pts.split(" ").map((p,i) => (i===0?"M ":"L ")+p).join(" ")}`;
+
+  return React.createElement("svg", { className: "chart-svg", viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: "none" },
+    React.createElement("defs", null,
+      React.createElement("linearGradient", { id: "grad", x1: "0", y1: "0", x2: "0", y2: "1" },
+        React.createElement("stop", { offset: "0%", stopColor: color, stopOpacity: "0.3" }),
+        React.createElement("stop", { offset: "100%", stopColor: color, stopOpacity: "0" })
+      )
+    ),
+    React.createElement("polyline", { points: pts, fill: "none", stroke: color, strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round" }),
+    vals.map((v, i) => {
+      const x = (i / (vals.length - 1)) * (W - 20) + 10;
+      const y = H - 10 - ((v - min) / range) * (H - 20);
+      return React.createElement("circle", { key: i, cx: x, cy: y, r: 4, fill: color });
+    })
+  );
+}
+
+// ── AUTH SCREEN ────────────────────────────────────────────────────────────
+function AuthScreen() {
+  const { refreshUser } = useApp();
+  const [tab, setTab] = useState("login");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit() {
+    if (!username || !password) { setError("Please fill in all fields"); return; }
+    setLoading(true); setError("");
+    try {
+      const res = tab === "login" ? await api.login(username, password) : await api.register(username, password);
+      setToken(res.access_token);
+      await refreshUser();
+    } catch (e) { setError(e.message); }
+    setLoading(false);
+  }
+
+  return React.createElement("div", { className: "screen auth-bg safe-top" },
+    React.createElement("div", { className: "auth-logo" }, "LIFT"),
+    React.createElement("div", { className: "auth-logo", style: { color: "var(--text)", marginTop: -10 } }, "LOG"),
+    React.createElement("div", { className: "auth-tagline" }, "Track every rep. Own every PR."),
+    React.createElement("div", { className: "auth-form" },
+      React.createElement("div", { className: "auth-tabs" },
+        React.createElement("div", { className: `auth-tab ${tab==="login"?"active":""}`, onClick: () => setTab("login") }, "Sign In"),
+        React.createElement("div", { className: `auth-tab ${tab==="register"?"active":""}`, onClick: () => setTab("register") }, "Create Account")
+      ),
+      error && React.createElement("div", { className: "error-msg" }, error),
+      React.createElement("div", { className: "input-group" },
+        React.createElement("label", { className: "input-label" }, "Username"),
+        React.createElement("input", { className: "input", placeholder: "your_username", value: username, onChange: e => setUsername(e.target.value), onKeyDown: e => e.key === "Enter" && handleSubmit() })
+      ),
+      React.createElement("div", { className: "input-group" },
+        React.createElement("label", { className: "input-label" }, "Password"),
+        React.createElement("input", { className: "input", type: "password", placeholder: "••••••••", value: password, onChange: e => setPassword(e.target.value), onKeyDown: e => e.key === "Enter" && handleSubmit() })
+      ),
+      React.createElement("div", { style: { marginTop: 8 } },
+        React.createElement("button", { className: "btn btn-primary", onClick: handleSubmit, disabled: loading },
+          loading ? React.createElement("span", { className: "spinner" }) : (tab === "login" ? "Sign In →" : "Create Account →")
+        )
+      )
+    )
+  );
+}
+
+// ── HOME SCREEN ────────────────────────────────────────────────────────────
+function HomeScreen({ navigate }) {
+  const { user } = useApp();
+  const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeSession, setActiveSession] = useState(null);
+
+  useEffect(() => {
+    Promise.all([
+      api.templates.list().then(setTemplates).catch(() => {}),
+      api.workouts.active().then(setActiveSession).catch(() => {})
+    ]).finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return React.createElement("div", { className: "screen loading-screen" }, React.createElement("span", { className: "spinner" }));
+
+  return React.createElement("div", { className: "screen safe-top" },
+    React.createElement("div", { className: "nav-bar" },
+      React.createElement("div", { className: "nav-title" }, "LIFTLOG"),
+      React.createElement("span", { style: { fontSize: 13, color: "var(--muted)" } }, `Hey, ${user?.username} 👋`)
+    ),
+    React.createElement("div", { className: "scroll-content" },
+      activeSession && React.createElement("div", { style: { marginTop: 16 } },
+        React.createElement("div", { className: "section-header" }, "⚡ Active Workout"),
+        React.createElement("div", { className: "card" },
+          React.createElement("div", { className: "card-row", style: { cursor: "pointer" }, onClick: () => navigate("workout", { sessionId: activeSession.id, templateId: activeSession.template_id }) },
+            React.createElement("div", null,
+              React.createElement("div", { className: "card-title" }, "Continue Workout"),
+              React.createElement("div", { className: "card-sub" }, `${activeSession.sets.length} sets logged`)
+            ),
+            React.createElement("span", { className: "badge" }, "LIVE")
+          )
+        )
+      ),
+      React.createElement("div", { className: "section-header" }, "Start a Workout"),
+      templates.length === 0
+        ? React.createElement("div", { className: "empty" },
+            React.createElement("div", { className: "empty-icon" }, "🏋️"),
+            React.createElement("div", { className: "empty-text" }, "No templates yet.\nCreate one to start logging.")
+          )
+        : templates.map(t =>
+            React.createElement("div", { key: t.id, className: "card", style: { marginBottom: 10, cursor: "pointer" }, onClick: async () => {
+              try {
+                const session = await api.workouts.start(t.id);
+                navigate("workout", { sessionId: session.id, templateId: t.id });
+              } catch(e) { alert(e.message); }
+            }},
+              React.createElement("div", { className: "card-row" },
+                React.createElement("div", null,
+                  React.createElement("div", { className: "card-title" }, t.name),
+                  React.createElement("div", { className: "card-sub" }, `${t.template_exercises.length} exercises`)
+                ),
+                React.createElement("span", { style: { fontSize: 22 } }, "▶")
+              )
+            )
+          ),
+      React.createElement("div", { className: "section-header" }, "Quick Actions"),
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 } },
+        [["💪", "Exercises", "exercises"], ["📋", "Templates", "templates"], ["📈", "Progress", "progress"], ["🕐", "History", "history"]].map(([icon, label, screen]) =>
+          React.createElement("div", { key: screen, className: "card", style: { cursor: "pointer" }, onClick: () => navigate(screen) },
+            React.createElement("div", { style: { padding: "18px 16px" } },
+              React.createElement("div", { style: { fontSize: 28, marginBottom: 4 } }, icon),
+              React.createElement("div", { style: { fontWeight: 600, fontSize: 14 } }, label)
+            )
+          )
+        )
+      )
+    )
+  );
+}
+
+// ── EXERCISES SCREEN ───────────────────────────────────────────────────────
+function ExercisesScreen({ navigate }) {
+  const [exercises, setExercises] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState({ name: "", category: "", notes: "" });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => { api.exercises.list().then(setExercises).finally(() => setLoading(false)); }, []);
+
+  function openAdd() { setEditing(null); setForm({ name: "", category: "", notes: "" }); setShowModal(true); }
+  function openEdit(ex) { setEditing(ex); setForm({ name: ex.name, category: ex.category || "", notes: ex.notes || "" }); setShowModal(true); }
+
+  async function save() {
+    if (!form.name) return;
+    try {
+      if (editing) { const u = await api.exercises.update(editing.id, form); setExercises(prev => prev.map(e => e.id === editing.id ? u : e)); }
+      else { const u = await api.exercises.create(form); setExercises(prev => [...prev, u]); }
+      setShowModal(false);
+    } catch(e) { alert(e.message); }
+  }
+
+  async function del(id) {
+    if (!confirm("Delete this exercise?")) return;
+    await api.exercises.delete(id);
+    setExercises(prev => prev.filter(e => e.id !== id));
+  }
+
+  return React.createElement("div", { className: "screen safe-top" },
+    React.createElement("div", { className: "nav-bar" },
+      React.createElement("button", { className: "nav-btn", onClick: () => navigate("home") }, "← Back"),
+      React.createElement("div", { className: "nav-sub" }, "Exercises"),
+      React.createElement("button", { className: "nav-btn accent", onClick: openAdd }, "+ Add")
+    ),
+    React.createElement("div", { className: "scroll-content" },
+      loading ? React.createElement("div", { style: { textAlign: "center", padding: 40 } }, React.createElement("span", { className: "spinner" })) :
+      exercises.length === 0 ? React.createElement("div", { className: "empty" }, React.createElement("div", { className: "empty-icon" }, "💪"), React.createElement("div", { className: "empty-text" }, "No exercises yet.\nTap + Add to create your first.")) :
+      React.createElement("div", { className: "card", style: { marginTop: 16 } },
+        exercises.map((ex, i) =>
+          React.createElement("div", { key: ex.id, className: "card-row" },
+            React.createElement("div", null,
+              React.createElement("div", { className: "card-title" }, ex.name),
+              ex.category && React.createElement("div", { className: "card-sub" }, ex.category)
+            ),
+            React.createElement("div", { style: { display: "flex", gap: 8 } },
+              React.createElement("button", { className: "btn btn-secondary btn-sm", onClick: () => openEdit(ex) }, "Edit"),
+              React.createElement("button", { className: "btn btn-danger btn-sm", onClick: () => del(ex.id) }, "✕")
+            )
+          )
+        )
+      )
+    ),
+    showModal && React.createElement("div", { className: "modal-overlay", onClick: e => e.target === e.currentTarget && setShowModal(false) },
+      React.createElement("div", { className: "modal-sheet" },
+        React.createElement("div", { className: "modal-handle" }),
+        React.createElement("div", { className: "modal-title" }, editing ? "Edit Exercise" : "New Exercise"),
+        React.createElement("div", { className: "input-group" }, React.createElement("label", { className: "input-label" }, "Name"), React.createElement("input", { className: "input", placeholder: "e.g. Bench Press", value: form.name, onChange: e => setForm(p => ({...p, name: e.target.value})) })),
+        React.createElement("div", { className: "input-group" }, React.createElement("label", { className: "input-label" }, "Category (optional)"), React.createElement("input", { className: "input", placeholder: "e.g. Chest, Back, Legs", value: form.category, onChange: e => setForm(p => ({...p, category: e.target.value})) })),
+        React.createElement("div", { className: "input-group" }, React.createElement("label", { className: "input-label" }, "Notes (optional)"), React.createElement("input", { className: "input", placeholder: "Cues, tips...", value: form.notes, onChange: e => setForm(p => ({...p, notes: e.target.value})) })),
+        React.createElement("button", { className: "btn btn-primary", onClick: save }, editing ? "Save Changes" : "Create Exercise")
+      )
+    )
+  );
+}
+
+// ── TEMPLATES SCREEN ───────────────────────────────────────────────────────
+function TemplatesScreen({ navigate }) {
+  const [templates, setTemplates] = useState([]);
+  const [exercises, setExercises] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [showNew, setShowNew] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [showAddEx, setShowAddEx] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([api.templates.list(), api.exercises.list()])
+      .then(([t, e]) => { setTemplates(t); setExercises(e); })
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function createTemplate() {
+    if (!newName) return;
+    const t = await api.templates.create({ name: newName });
+    setTemplates(p => [...p, t]); setNewName(""); setShowNew(false);
+  }
+
+  async function deleteTemplate(id) {
+    if (!confirm("Delete this template?")) return;
+    await api.templates.delete(id);
+    setTemplates(p => p.filter(t => t.id !== id));
+    if (selected?.id === id) setSelected(null);
+  }
+
+  async function addExercise(exId) {
+    const idx = selected.template_exercises.length;
+    const updated = await api.templates.addExercise(selected.id, { exercise_id: exId, order_index: idx });
+    setSelected(updated);
+    setTemplates(p => p.map(t => t.id === updated.id ? updated : t));
+  }
+
+  async function removeExercise(exId) {
+    const updated = await api.templates.removeExercise(selected.id, exId);
+    setSelected(updated);
+    setTemplates(p => p.map(t => t.id === updated.id ? updated : t));
+  }
+
+  if (selected) return React.createElement("div", { className: "screen safe-top" },
+    React.createElement("div", { className: "nav-bar" },
+      React.createElement("button", { className: "nav-btn", onClick: () => setSelected(null) }, "← Back"),
+      React.createElement("div", { className: "nav-sub" }, selected.name),
+      React.createElement("button", { className: "nav-btn accent", onClick: () => setShowAddEx(true) }, "+ Add")
+    ),
+    React.createElement("div", { className: "scroll-content" },
+      React.createElement("div", { className: "section-header" }, "Exercises"),
+      selected.template_exercises.length === 0
+        ? React.createElement("div", { className: "empty" }, React.createElement("div", { className: "empty-icon" }, "📋"), React.createElement("div", { className: "empty-text" }, "No exercises.\nTap + Add to add exercises."))
+        : React.createElement("div", { className: "card" },
+            selected.template_exercises.map((te, i) =>
+              React.createElement("div", { key: te.id, className: "card-row" },
+                React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } },
+                  React.createElement("span", { style: { fontFamily: "var(--font-mono)", color: "var(--muted)", fontSize: 13 } }, i + 1),
+                  React.createElement("div", { className: "card-title" }, te.exercise.name)
+                ),
+                React.createElement("button", { className: "btn btn-danger btn-sm", onClick: () => removeExercise(te.exercise_id) }, "✕")
+              )
+            )
+          )
+    ),
+    showAddEx && React.createElement("div", { className: "modal-overlay", onClick: e => e.target === e.currentTarget && setShowAddEx(false) },
+      React.createElement("div", { className: "modal-sheet" },
+        React.createElement("div", { className: "modal-handle" }),
+        React.createElement("div", { className: "modal-title" }, "Add Exercise"),
+        exercises.filter(e => !selected.template_exercises.find(te => te.exercise_id === e.id)).map(ex =>
+          React.createElement("div", { key: ex.id, className: "card", style: { marginBottom: 8, cursor: "pointer" }, onClick: () => { addExercise(ex.id); setShowAddEx(false); } },
+            React.createElement("div", { className: "card-row" },
+              React.createElement("div", { className: "card-title" }, ex.name),
+              React.createElement("span", { style: { color: "var(--accent)", fontSize: 20 } }, "+")
+            )
+          )
+        )
+      )
+    )
+  );
+
+  return React.createElement("div", { className: "screen safe-top" },
+    React.createElement("div", { className: "nav-bar" },
+      React.createElement("button", { className: "nav-btn", onClick: () => navigate("home") }, "← Back"),
+      React.createElement("div", { className: "nav-sub" }, "Templates"),
+      React.createElement("button", { className: "nav-btn accent", onClick: () => setShowNew(true) }, "+ New")
+    ),
+    React.createElement("div", { className: "scroll-content" },
+      loading ? React.createElement("div", { style: { textAlign: "center", padding: 40 } }, React.createElement("span", { className: "spinner" })) :
+      templates.length === 0 ? React.createElement("div", { className: "empty" }, React.createElement("div", { className: "empty-icon" }, "📋"), React.createElement("div", { className: "empty-text" }, "No templates yet.")) :
+      React.createElement("div", { className: "card", style: { marginTop: 16 } },
+        templates.map(t =>
+          React.createElement("div", { key: t.id, className: "card-row", style: { cursor: "pointer" }, onClick: () => setSelected(t) },
+            React.createElement("div", null,
+              React.createElement("div", { className: "card-title" }, t.name),
+              React.createElement("div", { className: "card-sub" }, `${t.template_exercises.length} exercises`)
+            ),
+            React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center" } },
+              React.createElement("span", { style: { color: "var(--muted)" } }, "→"),
+              React.createElement("button", { className: "btn btn-danger btn-sm", onClick: e => { e.stopPropagation(); deleteTemplate(t.id); } }, "✕")
+            )
+          )
+        )
+      )
+    ),
+    showNew && React.createElement("div", { className: "modal-overlay", onClick: e => e.target === e.currentTarget && setShowNew(false) },
+      React.createElement("div", { className: "modal-sheet" },
+        React.createElement("div", { className: "modal-handle" }),
+        React.createElement("div", { className: "modal-title" }, "New Template"),
+        React.createElement("div", { className: "input-group" }, React.createElement("label", { className: "input-label" }, "Template Name"), React.createElement("input", { className: "input", placeholder: "e.g. Pull Day", value: newName, onChange: e => setNewName(e.target.value), autoFocus: true })),
+        React.createElement("button", { className: "btn btn-primary", onClick: createTemplate }, "Create Template")
+      )
+    )
+  );
+}
+
+// ── WORKOUT SCREEN ─────────────────────────────────────────────────────────
+function WorkoutScreen({ params, navigate }) {
+  const { sessionId, templateId } = params;
+  const [session, setSession] = useState(null);
+  const [template, setTemplate] = useState(null);
+  const [prevSets, setPrevSets] = useState({});
+  const [sets, setSets] = useState({}); // { exerciseId: [{set_number,weight,reps,id}] }
+  const [loading, setLoading] = useState(true);
+  const [completing, setCompleting] = useState(false);
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    Promise.all([
+      api.workouts.get(sessionId),
+      api.templates.list().then(ts => ts.find(t => t.id === templateId))
+    ]).then(([sess, tmpl]) => {
+      setSession(sess);
+      setTemplate(tmpl);
+      // Load existing sets
+      const grouped = {};
+      for (const s of sess.sets) {
+        if (!grouped[s.exercise_id]) grouped[s.exercise_id] = [];
+        grouped[s.exercise_id].push(s);
+      }
+      setSets(grouped);
+      // Fetch previous sets for each exercise
+      if (tmpl) {
+        tmpl.template_exercises.forEach(te => {
+          api.workouts.previousSets(te.exercise_id).then(ps => {
+            setPrevSets(p => ({ ...p, [te.exercise_id]: ps }));
+          }).catch(() => {});
+        });
+      }
+    }).finally(() => setLoading(false));
+  }, []);
+
+  async function addSet(exId) {
+    const exSets = sets[exId] || [];
+    const setNum = exSets.length + 1;
+    const lastSet = exSets[exSets.length - 1];
+    const weight = lastSet ? lastSet.weight : 0;
+    const reps = lastSet ? lastSet.reps : 8;
+    const newSet = await api.workouts.addSet(sessionId, { exercise_id: exId, set_number: setNum, weight, reps });
+    setSets(p => ({ ...p, [exId]: [...(p[exId]||[]), newSet] }));
+  }
+
+  async function updateSetField(exId, setId, field, value) {
+    const num = parseFloat(value);
+    if (isNaN(num)) return;
+    const updated = await api.workouts.updateSet(sessionId, setId, { [field]: num });
+    setSets(p => ({ ...p, [exId]: p[exId].map(s => s.id === setId ? updated : s) }));
+  }
+
+  async function deleteSet(exId, setId) {
+    await api.workouts.deleteSet(sessionId, setId);
+    setSets(p => ({ ...p, [exId]: p[exId].filter(s => s.id !== setId) }));
+  }
+
+  async function complete() {
+    setCompleting(true);
+    try {
+      const updated = await api.workouts.complete(sessionId);
+      setSession(updated);
+      setDone(true);
+    } catch(e) { alert(e.message); }
+    setCompleting(false);
+  }
+
+  if (loading) return React.createElement("div", { className: "screen loading-screen" }, React.createElement("span", { className: "spinner" }));
+
+  if (done) {
+    const totalSets = Object.values(sets).reduce((a, arr) => a + arr.length, 0);
+    const exCount = Object.keys(sets).filter(k => sets[k].length > 0).length;
+    const dur = session ? formatDuration(session.start_time, new Date().toISOString()) : "—";
+    return React.createElement("div", { className: "screen safe-top" },
+      React.createElement("div", { className: "complete-screen" },
+        React.createElement("div", { className: "complete-icon" }, "🏆"),
+        React.createElement("div", { className: "complete-title" }, "CRUSHED IT"),
+        React.createElement("div", { style: { color: "var(--muted)", marginTop: 8 } }, template?.name || "Workout"),
+        React.createElement("div", { className: "complete-stats" },
+          React.createElement("div", { className: "complete-stat" }, React.createElement("div", { className: "complete-stat-val" }, exCount), React.createElement("div", { className: "complete-stat-label" }, "Exercises")),
+          React.createElement("div", { className: "complete-stat" }, React.createElement("div", { className: "complete-stat-val" }, totalSets), React.createElement("div", { className: "complete-stat-label" }, "Sets")),
+          React.createElement("div", { className: "complete-stat" }, React.createElement("div", { className: "complete-stat-val" }, dur), React.createElement("div", { className: "complete-stat-label" }, "Duration"))
+        ),
+        React.createElement("button", { className: "btn btn-primary", style: { marginTop: 16 }, onClick: () => navigate("home") }, "Back to Home")
+      )
+    );
+  }
+
+  const exercises = template?.template_exercises || [];
+
+  return React.createElement("div", { className: "screen safe-top" },
+    React.createElement("div", { className: "nav-bar" },
+      React.createElement("button", { className: "nav-btn danger", onClick: () => { if(confirm("Quit workout?")) navigate("home"); } }, "Quit"),
+      React.createElement("div", { className: "nav-sub" }, template?.name || "Workout"),
+      React.createElement("button", { className: "nav-btn accent", onClick: complete, disabled: completing }, completing ? "..." : "Done ✓")
+    ),
+    React.createElement("div", { className: "scroll-content" },
+      exercises.map(te => {
+        const exId = te.exercise_id;
+        const exSets = sets[exId] || [];
+        const prev = prevSets[exId] || [];
+        return React.createElement("div", { key: te.id, className: "exercise-block" },
+          React.createElement("div", { className: "exercise-block-header" },
+            React.createElement("div", { className: "exercise-block-name" }, te.exercise.name),
+            React.createElement("button", { className: "btn btn-secondary btn-sm", onClick: () => addSet(exId) }, "+ Set")
+          ),
+          prev.length > 0 && React.createElement("div", null,
+            React.createElement("div", { className: "prev-label" }, "Last time"),
+            React.createElement("div", { className: "prev-sets" }, prev.map((s, i) =>
+              React.createElement("span", { key: i, className: "prev-badge" }, `${s.weight}×${s.reps}`)
+            ))
+          ),
+          exSets.length > 0 && React.createElement("div", null,
+            React.createElement("div", { style: { display: "flex", padding: "6px 16px", gap: 8 } },
+              React.createElement("span", { style: { width: 24, fontSize: 11, color: "var(--muted)", flexShrink: 0 } }, "#"),
+              React.createElement("span", { style: { flex: 1, fontSize: 11, color: "var(--muted)", textAlign: "center" } }, "LBS"),
+              React.createElement("span", { style: { fontSize: 11, color: "var(--muted)", width: 16, textAlign: "center" } }, "×"),
+              React.createElement("span", { style: { flex: 1, fontSize: 11, color: "var(--muted)", textAlign: "center" } }, "REPS"),
+              React.createElement("span", { style: { width: 36, flexShrink: 0 } })
+            ),
+            exSets.map((s, i) =>
+              React.createElement("div", { key: s.id, className: "set-row" },
+                React.createElement("span", { className: "set-num" }, i + 1),
+                React.createElement("input", { className: "set-input", type: "number", value: s.weight, onChange: e => updateSetField(exId, s.id, "weight", e.target.value) }),
+                React.createElement("span", { className: "set-x" }, "×"),
+                React.createElement("input", { className: "set-input", type: "number", value: s.reps, onChange: e => updateSetField(exId, s.id, "reps", e.target.value) }),
+                React.createElement("button", { className: "btn btn-danger btn-sm btn-icon", onClick: () => deleteSet(exId, s.id) }, "✕")
+              )
+            )
+          ),
+          exSets.length === 0 && React.createElement("div", { style: { padding: "12px 16px", color: "var(--muted)", fontSize: 13 } }, "Tap + Set to start logging")
+        );
+      })
+    )
+  );
+}
+
+// ── PROGRESS SCREEN ────────────────────────────────────────────────────────
+function ProgressScreen({ navigate }) {
+  const [exercises, setExercises] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [progressData, setProgressData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [chartLoading, setChartLoading] = useState(false);
+
+  useEffect(() => { api.exercises.list().then(setExercises).finally(() => setLoading(false)); }, []);
+
+  async function loadProgress(ex) {
+    setSelected(ex); setChartLoading(true);
+    const data = await api.progress.exercise(ex.id).catch(() => null);
+    setProgressData(data); setChartLoading(false);
+  }
+
+  return React.createElement("div", { className: "screen safe-top" },
+    React.createElement("div", { className: "nav-bar" },
+      React.createElement("button", { className: "nav-btn", onClick: () => { if(selected) { setSelected(null); setProgressData(null); } else navigate("home"); } }, "← Back"),
+      React.createElement("div", { className: "nav-sub" }, selected ? selected.name : "Progress")
+    ),
+    React.createElement("div", { className: "scroll-content" },
+      selected
+        ? React.createElement("div", null,
+            React.createElement("div", { style: { marginTop: 16 } },
+              React.createElement("div", { className: "chart-wrap" },
+                React.createElement("div", { className: "chart-title" }, "Max Weight Progression (lbs)"),
+                chartLoading ? React.createElement("div", { style: { textAlign: "center", padding: 20 } }, React.createElement("span", { className: "spinner" })) : React.createElement(LineChart, { data: progressData?.data })
+              ),
+              progressData?.data?.length > 0 && React.createElement("div", { className: "card" },
+                React.createElement("div", { className: "card-row" }, React.createElement("div", { className: "card-sub" }, "Date"), React.createElement("div", { className: "card-sub" }, "Max Weight"), React.createElement("div", { className: "card-sub" }, "Total Reps")),
+                [...(progressData?.data || [])].reverse().map((d, i) =>
+                  React.createElement("div", { key: i, className: "card-row" },
+                    React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 13 } }, formatDate(d.date)),
+                    React.createElement("div", { style: { fontWeight: 600 } }, `${d.max_weight} lbs`),
+                    React.createElement("div", { style: { color: "var(--muted)", fontSize: 13 } }, `${d.total_reps} reps`)
+                  )
+                )
+              )
+            )
+          )
+        : React.createElement("div", null,
+            React.createElement("div", { className: "section-header" }, "Select Exercise"),
+            loading ? React.createElement("div", { style: { textAlign: "center", padding: 40 } }, React.createElement("span", { className: "spinner" })) :
+            exercises.length === 0 ? React.createElement("div", { className: "empty" }, React.createElement("div", { className: "empty-icon" }, "📈"), React.createElement("div", { className: "empty-text" }, "No exercises found.")) :
+            React.createElement("div", { className: "card" },
+              exercises.map(ex =>
+                React.createElement("div", { key: ex.id, className: "card-row", style: { cursor: "pointer" }, onClick: () => loadProgress(ex) },
+                  React.createElement("div", { className: "card-title" }, ex.name),
+                  React.createElement("span", { style: { color: "var(--muted)" } }, "→")
+                )
+              )
+            )
+          )
+    )
+  );
+}
+
+// ── HISTORY SCREEN ─────────────────────────────────────────────────────────
+function HistoryScreen({ navigate }) {
+  const [history, setHistory] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [sessionDetail, setSessionDetail] = useState(null);
+  const [exercises, setExercises] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([api.workouts.history(), api.exercises.list()])
+      .then(([h, e]) => {
+        setHistory(h);
+        const map = {};
+        e.forEach(ex => map[ex.id] = ex);
+        setExercises(map);
+      }).finally(() => setLoading(false));
+  }, []);
+
+  async function loadDetail(item) {
+    setSelected(item);
+    const detail = await api.workouts.get(item.id);
+    setSessionDetail(detail);
+  }
+
+  if (selected) {
+    const grouped = {};
+    if (sessionDetail) {
+      for (const s of sessionDetail.sets) {
+        if (!grouped[s.exercise_id]) grouped[s.exercise_id] = [];
+        grouped[s.exercise_id].push(s);
+      }
+    }
+    return React.createElement("div", { className: "screen safe-top" },
+      React.createElement("div", { className: "nav-bar" },
+        React.createElement("button", { className: "nav-btn", onClick: () => { setSelected(null); setSessionDetail(null); } }, "← Back"),
+        React.createElement("div", { className: "nav-sub" }, selected.template_name || "Workout")
+      ),
+      React.createElement("div", { className: "scroll-content" },
+        React.createElement("div", { style: { marginTop: 12, marginBottom: 16, display: "flex", gap: 8 } },
+          React.createElement("span", { className: "chip" }, `📅 ${formatDate(selected.start_time)}`),
+          React.createElement("span", { className: "chip" }, `⏱ ${formatDuration(selected.start_time, selected.end_time)}`),
+          React.createElement("span", { className: "chip" }, `${selected.set_count} sets`)
+        ),
+        !sessionDetail ? React.createElement("div", { style: { textAlign: "center", padding: 40 } }, React.createElement("span", { className: "spinner" })) :
+        Object.keys(grouped).map(exId => {
+          const ex = exercises[exId];
+          return React.createElement("div", { key: exId, className: "exercise-block", style: { marginBottom: 10 } },
+            React.createElement("div", { className: "exercise-block-header" },
+              React.createElement("div", { className: "exercise-block-name" }, ex?.name || "Unknown")
+            ),
+            grouped[exId].map((s, i) =>
+              React.createElement("div", { key: s.id, className: "set-row" },
+                React.createElement("span", { className: "set-num" }, i + 1),
+                React.createElement("span", { style: { flex: 1, textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 16 } }, `${s.weight} lbs`),
+                React.createElement("span", { className: "set-x" }, "×"),
+                React.createElement("span", { style: { flex: 1, textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 16 } }, `${s.reps}`)
+              )
+            )
+          );
+        })
+      )
+    );
+  }
+
+  return React.createElement("div", { className: "screen safe-top" },
+    React.createElement("div", { className: "nav-bar" },
+      React.createElement("button", { className: "nav-btn", onClick: () => navigate("home") }, "← Back"),
+      React.createElement("div", { className: "nav-sub" }, "History")
+    ),
+    React.createElement("div", { className: "scroll-content" },
+      loading ? React.createElement("div", { style: { textAlign: "center", padding: 40 } }, React.createElement("span", { className: "spinner" })) :
+      history.length === 0 ? React.createElement("div", { className: "empty" }, React.createElement("div", { className: "empty-icon" }, "🕐"), React.createElement("div", { className: "empty-text" }, "No workouts completed yet.")) :
+      React.createElement("div", { className: "card", style: { marginTop: 16 } },
+        history.map(item =>
+          React.createElement("div", { key: item.id, className: "history-item", style: { cursor: "pointer" }, onClick: () => loadDetail(item) },
+            React.createElement("div", null,
+              React.createElement("div", { className: "history-date" }, formatDate(item.start_time)),
+              React.createElement("div", { className: "history-name" }, item.template_name || "Workout"),
+              React.createElement("div", { className: "history-meta" }, `${item.exercise_count} exercises • ${item.set_count} sets • ${formatDuration(item.start_time, item.end_time)}`)
+            ),
+            React.createElement("span", { className: "history-arrow" }, "→")
+          )
+        )
+      )
+    )
+  );
+}
+
+// ── TAB BAR ────────────────────────────────────────────────────────────────
+function TabBar({ screen, navigate }) {
+  const tabs = [
+    { id: "home", icon: "🏠", label: "Home" },
+    { id: "exercises", icon: "💪", label: "Exercises" },
+    { id: "templates", icon: "📋", label: "Templates" },
+    { id: "progress", icon: "📈", label: "Progress" },
+    { id: "history", icon: "🕐", label: "History" },
+  ];
+  return React.createElement("div", { className: "tab-bar" },
+    tabs.map(t => React.createElement("div", { key: t.id, className: `tab-item ${screen === t.id ? "active" : ""}`, onClick: () => navigate(t.id) },
+      React.createElement("span", { className: "tab-icon" }, t.icon),
+      React.createElement("span", { className: "tab-label" }, t.label)
+    ))
+  );
+}
+
+// ── ROOT APP ───────────────────────────────────────────────────────────────
+function App() {
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [screen, setScreen] = useState("home");
+  const [screenParams, setScreenParams] = useState({});
+
+  async function refreshUser() {
+    try { const u = await api.me(); setUser(u); }
+    catch { setUser(null); clearToken(); }
+  }
+
+  useEffect(() => {
+    if (getToken()) { refreshUser().finally(() => setAuthLoading(false)); }
+    else { setAuthLoading(false); }
+  }, []);
+
+  function navigate(s, params = {}) { setScreen(s); setScreenParams(params); }
+
+  if (authLoading) return React.createElement("div", { className: "loading-screen", style: { minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)" } }, React.createElement("span", { className: "spinner" }));
+
+  const ctx = { user, refreshUser, navigate };
+  const noTabScreens = ["workout"];
+
+  let content;
+  switch(screen) {
+    case "home": content = React.createElement(HomeScreen, { navigate }); break;
+    case "exercises": content = React.createElement(ExercisesScreen, { navigate }); break;
+    case "templates": content = React.createElement(TemplatesScreen, { navigate }); break;
+    case "workout": content = React.createElement(WorkoutScreen, { params: screenParams, navigate }); break;
+    case "progress": content = React.createElement(ProgressScreen, { navigate }); break;
+    case "history": content = React.createElement(HistoryScreen, { navigate }); break;
+    default: content = React.createElement(HomeScreen, { navigate });
+  }
+
+  if (!user) return React.createElement(AppCtx.Provider, { value: ctx }, React.createElement(AuthScreen));
+
+  return React.createElement(AppCtx.Provider, { value: ctx },
+    React.createElement("div", { className: "screen" },
+      content,
+      !noTabScreens.includes(screen) && React.createElement(TabBar, { screen, navigate })
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+</script>
+</body>
+</html>

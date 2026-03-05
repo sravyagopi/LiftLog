@@ -1,0 +1,4 @@
+# Dependencies
+.venv/
+backend/.venv/
+backend/liftlog.db
