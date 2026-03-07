@@ -45,7 +45,12 @@ function HomeScreen({ navigate }) {
           "div", {
             className: "card",
             style: { cursor: "pointer" },
-            onClick: () => navigate("workout", { sessionId: activeSession.id, templateId: activeSession.template_id }),
+            onClick: () => {
+              // activeSession.start_time comes from backend (no Z suffix) — force UTC
+              const raw = activeSession.start_time;
+              const startedAt = new Date(raw.endsWith("Z") ? raw : raw + "Z").getTime();
+              navigate("workout", { sessionId: activeSession.id, templateId: activeSession.template_id, startedAt });
+            },
           },
           React.createElement(
             "div", { className: "card-row" },
@@ -75,8 +80,9 @@ function HomeScreen({ navigate }) {
                 style: { marginBottom: 10, cursor: "pointer" },
                 onClick: async () => {
                   try {
+                    const startedAt = Date.now();  // capture BEFORE any async work
                     const session = await api.workouts.start(t.id);
-                    navigate("workout", { sessionId: session.id, templateId: t.id });
+                    navigate("workout", { sessionId: session.id, templateId: t.id, startedAt });
                   } catch (e) { alert(e.message); }
                 },
               },

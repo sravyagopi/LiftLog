@@ -18,7 +18,7 @@ function formatElapsed(totalSeconds) {
 }
 
 function WorkoutScreen({ params, navigate }) {
-  const { sessionId, templateId } = params;
+  const { sessionId, templateId, startedAt } = params;
 
   const [session,        setSession]       = useWkState(null);
   const [workoutName,    setWorkoutName]   = useWkState("Workout");
@@ -69,11 +69,15 @@ function WorkoutScreen({ params, navigate }) {
       const extraExercises = allEx.filter(e => extraIds.includes(e.id));
       setActiveExercises([...templateExercises, ...extraExercises]);
 
-      // Start timer from 0 based on actual session start_time
-      const startMs = new Date(sess.start_time).getTime();
-      startRef.current = startMs;
-      // Count up: elapsed = now - start (already positive, growing)
-      setElapsed(Math.floor((Date.now() - startMs) / 1000));
+      // Use the epoch ms timestamp captured in HomeScreen at the moment the user
+      // tapped "Start Workout" — avoids all UTC/timezone parsing issues with the
+      // backend's start_time string.  Falls back to Date.now() if somehow missing.
+      const timerBase = (startedAt && startedAt <= Date.now()) ? startedAt : Date.now();
+      startRef.current = timerBase;
+      // Seed immediately so first render shows correct value, not 0
+      setElapsed(Math.floor((Date.now() - timerBase) / 1000));
+
+      // Tick every second — counts UP from 00:00
       timerRef.current = setInterval(() => {
         setElapsed(Math.floor((Date.now() - startRef.current) / 1000));
       }, 1000);
